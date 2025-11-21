@@ -1,13 +1,6 @@
 import matplotlib.pyplot as plt
 import re
 
-with open("valid-wordle-words.txt", "r") as f:
-    valid_words = set(word.strip().lower() for word in f.readlines())
-
-# for i, word in enumerate(valid_words):
-#     print(f"{i}: {word}")
-
-
 def compare_words(guess, target):
     target = list(target)
     guess = list(guess)
@@ -28,7 +21,7 @@ def compare_words(guess, target):
     return result
 
 
-def pattern_match_rating(pattern, requested_pattern, mode="gy/x"):
+def pattern_match_rating(pattern, requested_pattern, mode="x/gy"):
     # decode mode
     # pattern: ccc; cc/c; c/cc; c/c/c
     if not re.match(r'^(?!.*(.).*\1)(?:[xgy]{3}|[xgy]{2}/[xgy]|[xgy]/[xgy]{2}|[xgy]/[xgy]/[xgy])$', mode):
@@ -50,7 +43,7 @@ def pattern_match_rating(pattern, requested_pattern, mode="gy/x"):
                 mode_parsed[0][0] = group_index
                 mode_parsed[1][0] = color_index
 
-    # convert pattern 
+    # convert pattern
     group_match = 0
     color_match = 0
 
@@ -61,15 +54,26 @@ def pattern_match_rating(pattern, requested_pattern, mode="gy/x"):
         if mode_parsed[0][p] == rp:
             group_match += 1
             color_match += 2 - mode_parsed[1][p]
-            
+
     return group_match * 10 + color_match
-        
 
-requested_pattern = [1, 1, 0, 1, 1]
-pattern = [2, 2, 0, 2, 2]
 
-print(pattern_match_rating(pattern, requested_pattern, mode="x/gy"))
-
+def find_words(word_list, target_word, desired_pattern, modes=["x/gy"]):
+    result = {}
+    for mode in modes:
+        result[mode] = {"candidates": [[]]*6, "ratings": [0]*6}
+    
+    for word in word_list:
+        pattern = compare_words(word, target_word)
+        for i in range(6):
+            for mode in modes:
+                rating = pattern_match_rating(pattern, desired_pattern[i], mode)
+                if rating > result[mode]["ratings"][i]:
+                    result[mode]["ratings"][i] = rating
+                    result[mode]["candidates"][i] = [word]
+                elif rating == result[mode]["ratings"][i]:
+                    result[mode]["candidates"][i].append(word)
+    return result
 
 def display_result(result):
     colors = ""
@@ -91,13 +95,27 @@ def display_result(result):
     return colors, letters, numbers
 
 
-target = "crane"
-guess = "ncree"
+if __name__ == "__main__":
+    with open("valid-wordle-words.txt", "r") as f:
+        valid_words = set(word.strip().lower() for word in f.readlines())
+    
+    target_word = "vowel"
+    desired_pattern = [
+        [0, 1, 0, 1, 0], 
+        [0, 1, 0, 1, 0], 
+        [0, 0, 0, 0, 0], 
+        [1, 0, 0, 0, 1], 
+        [0, 1, 1, 1, 0], 
+        [0, 0, 0, 0, 0], 
+    ]
 
-print(f"target:\t{target}")
-print(f"guess:\t{guess}")
-
-
-result = compare_words(guess, target)
-colors, letters, numbers = display_result(result)
-print(f"result:\t{display_result(result)} ({result})")
+    modes = ["x/gy"]
+    result = find_words(valid_words, target_word, desired_pattern, modes)
+    for mode in modes:
+        print(f"Mode: {mode}")
+        for i in range(6):
+            colors, letters, numbers = display_result(desired_pattern[i])
+            candidates = result[mode]["candidates"][i]
+            rating = result[mode]["ratings"][i]
+            print(f"Pattern {i+1}: {colors} ({letters}, {numbers}) -> Rating: {rating}, Candidates: {candidates}")
+        print()
