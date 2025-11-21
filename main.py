@@ -66,6 +66,9 @@ def find_words(word_list, target_word, desired_pattern, modes=["x/gy"]):
     for word in word_list:
         pattern = compare_words(word, target_word)
         for i in range(6):
+            if word == target_word and i != 5: # Avoid winning before last round
+                continue
+
             for mode in modes:
                 rating = pattern_match_rating(pattern, desired_pattern[i], mode)
                 if rating > result[mode]["ratings"][i]:
@@ -122,6 +125,7 @@ if __name__ == "__main__":
         for i in range(6):
             colors, letters, numbers = display_pattern(desired_pattern[i], mode)
             candidates = result[mode]["candidates"][i]
+            newcolors, newletters, newnumbers = display_pattern(compare_words(candidates[0], target_word))
             rating = result[mode]["ratings"][i]
-            print(f"Pattern {i+1}: {colors} ({letters}, {numbers}) -> Rating: {rating}, Candidates: {candidates}")
+            print(f"Pattern {i+1}: {colors} ({letters}, {numbers}) -> {newcolors} ({newletters}, {newnumbers}) Rating: {rating}, Candidates: {candidates[0]}")
         print()
