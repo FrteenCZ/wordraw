@@ -24,8 +24,8 @@ def compare_words(guess, target):
 def pattern_match_rating(pattern, requested_pattern, mode="x/gy"):
     # decode mode
     # pattern: ccc; cc/c; c/cc; c/c/c
-    if not re.match(r'^(?!.*(.).*\1)(?:[xgy]{3}|[xgy]{2}/[xgy]|[xgy]/[xgy]{2}|[xgy]/[xgy]/[xgy])$', mode):
-        raise ValueError("Invalid pattern")
+    if not re.match(r'^(?!.*([xgy]).*\1)(?:[xgy]{3}|[xgy]{2}/[xgy]|[xgy]/[xgy]{2}|[xgy]/[xgy]/[xgy])$', mode):
+        raise ValueError(f"Invalid pattern: {mode}")
 
     groups = mode.split('/')
     mode_parsed = [[0, 0, 0],
@@ -75,23 +75,29 @@ def find_words(word_list, target_word, desired_pattern, modes=["x/gy"]):
                     result[mode]["candidates"][i].append(word)
     return result
 
-def display_result(result):
+def display_pattern(pattern, mode="x/y/g"):
+    mcolor = {"g": "🟩", "y": "🟨", "x": "⬜"}
+    mletters = {"g": "G", "y": "Y", "x": "X"}
+    mnumbers = {"g": "2", "y": "1", "x": "0"}
+
+    mode = mode.split('/')
+
     colors = ""
     letters = ""
     numbers = ""
-    for color in result:
-        if color == 2:          # Green
-            colors += "🟩"
-            letters += "G"
-            numbers += "2"
-        elif color == 1:        # Yellow
-            colors += "🟨"
-            letters += "Y"
-            numbers += "1"
-        else:                   # Gray
-            colors += "⬜"
-            letters += "X"
-            numbers += "0"
+    for color in pattern:
+        if color == 2:              # Green
+            colors += mcolor[mode[2][0]]
+            letters += mletters[mode[2][0]]
+            numbers += mnumbers[mode[2][0]]
+        elif color == 1:            # Yellow
+            colors += mcolor[mode[1][0]]
+            letters += mletters[mode[1][0]]
+            numbers += mnumbers[mode[1][0]]
+        else:                       # Gray
+            colors += mcolor[mode[0][0]]
+            letters += mletters[mode[0][0]]
+            numbers += mnumbers[mode[0][0]]
     return colors, letters, numbers
 
 
@@ -109,12 +115,12 @@ if __name__ == "__main__":
         [0, 0, 0, 0, 0], 
     ]
 
-    modes = ["x/gy"]
+    modes = ["x/gy", "xy/g", "gy/x", "x/y/g"]
     result = find_words(valid_words, target_word, desired_pattern, modes)
     for mode in modes:
         print(f"Mode: {mode}")
         for i in range(6):
-            colors, letters, numbers = display_result(desired_pattern[i])
+            colors, letters, numbers = display_pattern(desired_pattern[i], mode)
             candidates = result[mode]["candidates"][i]
             rating = result[mode]["ratings"][i]
             print(f"Pattern {i+1}: {colors} ({letters}, {numbers}) -> Rating: {rating}, Candidates: {candidates}")
