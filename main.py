@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import numpy as np
 import re
 
 def compare_words(guess, target):
@@ -114,6 +115,60 @@ def print_result(result, desired_pattern, target_word, modes=["x/gy"], num_of_ca
             print(f"Pattern {i+1}: {colors} ({letters}, {numbers}) -> {newcolors} ({newletters}, {newnumbers}) Rating: {rating}, Candidates: {candidates[:num_of_candidates]}")
         print()
 
+def plot_result(result, target_word, modes=["x/gy"]):
+    n_modes = len(modes)
+    if n_modes == 0:
+        return
+
+    fig, axes = plt.subplots(nrows=n_modes, ncols=1, figsize=(6, 6 * n_modes))
+    if n_modes == 1:
+        axes = [axes]
+
+    # leave room at left for the mode labels
+    fig.subplots_adjust(left=0.18, right=0.98, top=0.98, bottom=0.02, hspace=0.4)
+
+    for ax, mode in zip(axes, modes):
+        # default everything to gray so empty candidates still show a board
+        image = np.zeros((6, 5, 3), dtype=np.uint8)
+        image[:] = [63, 63, 64]
+
+        for i in range(6):
+            candidates = result[mode]["candidates"][i]
+            if not candidates:
+                continue
+            word = candidates[0]
+            pattern = compare_words(word, target_word)
+            for j in range(5):
+                if pattern[j] == 2:      # Green
+                    image[i, j] = [84, 140, 80]
+                elif pattern[j] == 1:    # Yellow
+                    image[i, j] = [190, 158, 63]
+                else:                    # Gray
+                    image[i, j] = [63, 63, 64]
+        
+        ax.imshow(image, interpolation='nearest', origin='upper', aspect='equal')
+        ax.set_xticks([])
+        ax.set_yticks([])
+
+        # draw letters from chosen candidate on top of colored squares
+        for i in range(6):
+            candidates = result[mode]["candidates"][i]
+            if not candidates:
+                continue
+            word = candidates[0]
+            pattern = compare_words(word, target_word)
+            for j, ch in enumerate(word):
+                txt_color = 'black' if pattern[j] == 1 else 'white'
+                ax.text(j, i, ch.upper(), ha='center', va='center',
+                        fontsize=18, fontweight='bold', color=txt_color)
+
+        # move the mode label to the left of the subplot, horizontally aligned center
+        ax.set_ylabel(mode, fontsize=12, rotation=0, labelpad=25)
+        ax.yaxis.set_label_coords(-0.12, 0.5)
+
+    plt.tight_layout()
+    plt.show()
+
 if __name__ == "__main__":
     with open("valid-wordle-words.txt", "r") as f:
         valid_words = set(word.strip().lower() for word in f.readlines())
@@ -128,6 +183,7 @@ if __name__ == "__main__":
         [0, 0, 0, 0, 0], 
     ]
 
-    modes = ["x/gy", "xy/g", "gy/x", "x/y/g"]
+    modes = ["x/gy", "yg/x", "gy/x", "x/y/g"]
     result = find_words(valid_words, target_word, desired_pattern, modes)
     print_result(result, desired_pattern, target_word, modes)
+    plot_result(result, target_word, modes)
