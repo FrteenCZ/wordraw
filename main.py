@@ -11,18 +11,18 @@ with open("valid-wordle-words.txt", "r") as f:
 def compare_words(guess, target):
     target = list(target)
     guess = list(guess)
-    result = 0
+    result = [0] * 5
     yellows = []
     for i in range(5):
         if guess[i] == target[i]:
-            result += 2 * 3**i
+            result[i] = 2
             target[i] = "-"
         elif guess[i] in target:
             yellows.append(i)
 
     for i in yellows:
         if guess[i] in target:
-            result += 1 * 3**i
+            result[i] = 1
             target[target.index(guess[i])] = "-"
 
     return result
@@ -75,13 +75,12 @@ def display_result(result):
     colors = ""
     letters = ""
     numbers = ""
-    for i in range(5):
-        digit = result % 3
-        if digit == 2:          # Green
+    for color in result:
+        if color == 2:          # Green
             colors += "🟩"
             letters += "G"
             numbers += "2"
-        elif digit == 1:        # Yellow
+        elif color == 1:        # Yellow
             colors += "🟨"
             letters += "Y"
             numbers += "1"
@@ -89,7 +88,6 @@ def display_result(result):
             colors += "⬜"
             letters += "X"
             numbers += "0"
-        result //= 3
     return colors, letters, numbers
 
 
