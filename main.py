@@ -103,6 +103,16 @@ def display_pattern(pattern, mode="x/y/g"):
             numbers += mnumbers[mode[0][0]]
     return colors, letters, numbers
 
+def print_result(result, desired_pattern, target_word, modes=["x/gy"], num_of_candidates=1):
+    for mode in modes:
+        print(f"Mode: {mode}")
+        for i in range(6):
+            colors, letters, numbers = display_pattern(desired_pattern[i], mode)
+            candidates = result[mode]["candidates"][i]
+            newcolors, newletters, newnumbers = display_pattern(compare_words(candidates[0], target_word))
+            rating = result[mode]["ratings"][i]
+            print(f"Pattern {i+1}: {colors} ({letters}, {numbers}) -> {newcolors} ({newletters}, {newnumbers}) Rating: {rating}, Candidates: {candidates[:num_of_candidates]}")
+        print()
 
 if __name__ == "__main__":
     with open("valid-wordle-words.txt", "r") as f:
@@ -120,12 +130,4 @@ if __name__ == "__main__":
 
     modes = ["x/gy", "xy/g", "gy/x", "x/y/g"]
     result = find_words(valid_words, target_word, desired_pattern, modes)
-    for mode in modes:
-        print(f"Mode: {mode}")
-        for i in range(6):
-            colors, letters, numbers = display_pattern(desired_pattern[i], mode)
-            candidates = result[mode]["candidates"][i]
-            newcolors, newletters, newnumbers = display_pattern(compare_words(candidates[0], target_word))
-            rating = result[mode]["ratings"][i]
-            print(f"Pattern {i+1}: {colors} ({letters}, {numbers}) -> {newcolors} ({newletters}, {newnumbers}) Rating: {rating}, Candidates: {candidates[0]}")
-        print()
+    print_result(result, desired_pattern, target_word, modes)
