@@ -86,6 +86,19 @@ def find_words(word_list, target_word, desired_patterns, modes=["x/gy"]):
     return results
 
 
+def sort_modes(results):
+    # sort modes by total ratings descending
+    mode_ratings = {}
+    for result in results:
+        for mode in result.keys():
+            mode_ratings[mode] = mode_ratings.get(
+                mode, 0) + sum(result[mode]["ratings"])
+
+    sorted_modes = sorted(mode_ratings.items(),
+                          key=lambda x: x[1], reverse=True)
+    return [mode for mode, rating in sorted_modes], mode_ratings
+
+
 def display_pattern(pattern, mode="x/y/g"):
     mcolor = {"g": "🟩", "y": "🟨", "x": "⬜"}
     mletters = {"g": "G", "y": "Y", "x": "X"}
@@ -112,9 +125,9 @@ def display_pattern(pattern, mode="x/y/g"):
     return colors, letters, numbers
 
 
-def print_result(results, desired_patterns, target_word, modes=["x/gy"], num_of_candidates=1):
+def print_result(results, desired_patterns, target_word, modes=["x/gy"], mode_ratings={}, num_of_candidates=1):
     for mode in modes:
-        print(f"Mode: {mode}")
+        print(f"Mode: {mode} (Total Rating: {mode_ratings.get(mode, 0)})")
         for result, desired_pattern in zip(results, desired_patterns):
             for i in range(6):
                 colors, letters, numbers = display_pattern(
@@ -129,7 +142,7 @@ def print_result(results, desired_patterns, target_word, modes=["x/gy"], num_of_
         print("--------------------------------")
 
 
-def plot_result(result, target_word, modes=["x/gy"]):
+def plot_result(result, target_word, modes=["x/gy"], mode_ratings={}):
     # support both single-dict and list-of-dicts results
     results_list = result if isinstance(result, list) else [result]
     n_patterns = len(results_list)
@@ -138,13 +151,14 @@ def plot_result(result, target_word, modes=["x/gy"]):
         return
 
     fig, axes = plt.subplots(nrows=n_modes, ncols=n_patterns,
-                             figsize=(4 * n_patterns + 2, 2 * n_modes + 8 * n_modes))
+                             figsize=(2 * n_patterns + 2, 2 * n_modes))
     # normalize axes to 2D array with shape (n_modes, n_patterns)
     axes = np.atleast_2d(axes)
     axes = axes.reshape((n_modes, n_patterns))
 
     # leave room at left for the mode labels
-    fig.subplots_adjust(left=0.18, right=0.98, top=0.95, bottom=0.03, wspace=0.2, hspace=0.4)
+    fig.subplots_adjust(left=0.18, right=0.98, top=0.95,
+                        bottom=0.03, wspace=0.2, hspace=0.4)
 
     for r, mode in enumerate(modes):
         for c, res in enumerate(results_list):
@@ -168,7 +182,8 @@ def plot_result(result, target_word, modes=["x/gy"]):
                     else:                    # Gray
                         image[i, j] = [63, 63, 64]
 
-            ax.imshow(image, interpolation='nearest', origin='upper', aspect='equal')
+            ax.imshow(image, interpolation='nearest',
+                      origin='upper', aspect='equal')
             ax.set_xticks([])
             ax.set_yticks([])
 
@@ -186,8 +201,8 @@ def plot_result(result, target_word, modes=["x/gy"]):
 
             # left label only on first column
             if c == 0:
-                ax.set_ylabel(mode, fontsize=12, rotation=0, labelpad=25)
-                ax.yaxis.set_label_coords(-0.12, 0.5)
+                ax.set_ylabel(f"{mode} ({mode_ratings.get(mode, 0)})", fontsize=12, rotation=0, labelpad=25)
+                ax.yaxis.set_label_coords(-0.4, 0.5)
 
             # top title only on first row
             if r == 0:
@@ -196,44 +211,51 @@ def plot_result(result, target_word, modes=["x/gy"]):
     plt.tight_layout()
     plt.show()
 
+
 def string_to_patterns(s):
     s = s.lower()
     with open("font_data.json", "r") as f:
         font_dict = json.load(f)
-    
+
     patterns = []
     for char in s:
         if char in font_dict:
             patterns.append(font_dict[char])
         else:
             patterns.append(font_dict["?"])  # Use ? for unknown characters
-    
+
     return patterns
+
 
 if __name__ == "__main__":
     with open("valid-wordle-words.txt", "r") as f:
         valid_words = set(word.strip().lower() for word in f.readlines())
 
     target_word = "thick"
-    # desired_patterns = [
-    #     [[0, 1, 0, 1, 0],
-    #      [0, 1, 0, 1, 0],
-    #      [0, 0, 0, 0, 0],
-    #      [1, 0, 0, 0, 1],
-    #      [0, 1, 1, 1, 0],
-    #      [0, 0, 0, 0, 0],
-    #      ],
-    #     [[0, 1, 0, 1, 0],
-    #      [0, 1, 0, 1, 0],
-    #      [0, 0, 0, 0, 0],
-    #      [0, 0, 0, 0, 0],
-    #      [0, 1, 1, 1, 0],
-    #      [1, 0, 0, 0, 1],]]
+    desired_patterns = [
+        [[0, 1, 0, 1, 0],
+         [1, 1, 1, 1, 1],
+         [1, 1, 1, 1, 1],
+         [0, 1, 1, 1, 0],
+         [0, 0, 1, 0, 0],
+         [0, 0, 0, 0, 0],
+         ],
+        [[0, 1, 0, 1, 0],
+         [1, 1, 1, 1, 1],
+         [1, 1, 1, 1, 1],
+         [0, 1, 1, 1, 0],
+         [0, 0, 1, 0, 0],
+         [1, 1, 1, 1, 1],
+         ],]
+    # modes = ["x/y/g", "x/g/y", "y/x/g", "y/g/x", "g/x/y", "g/y/x"]
 
-    message = "Hello!"
-    desired_patterns = string_to_patterns(message)
+    # message = "sex?"
+    # desired_patterns = string_to_patterns(message)
+    modes = ["x/gy", "gy/x", "y/gx", "x/yg", "yg/x"]
+    # modes = ["x/gy", "gy/x"]
 
-    modes = ["x/gy", "yg/x", "gy/x", "x/y/g"]
     results = find_words(valid_words, target_word, desired_patterns, modes)
-    print_result(results, desired_patterns, target_word, modes)
-    plot_result(results, target_word, modes)
+    sorted_modes, mode_ratings = sort_modes(results)
+    print_result(results, desired_patterns, target_word,
+                 sorted_modes, mode_ratings)
+    plot_result(results, target_word, sorted_modes, mode_ratings)
