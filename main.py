@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import re
+import json
 
 
 def compare_words(guess, target):
@@ -195,28 +196,44 @@ def plot_result(result, target_word, modes=["x/gy"]):
     plt.tight_layout()
     plt.show()
 
+def string_to_patterns(s):
+    s = s.lower()
+    with open("font_data.json", "r") as f:
+        font_dict = json.load(f)
+    
+    patterns = []
+    for char in s:
+        if char in font_dict:
+            patterns.append(font_dict[char])
+        else:
+            patterns.append(font_dict["?"])  # Use ? for unknown characters
+    
+    return patterns
 
 if __name__ == "__main__":
     with open("valid-wordle-words.txt", "r") as f:
         valid_words = set(word.strip().lower() for word in f.readlines())
 
-    target_word = "vowel"
-    desired_pattern = [
-        [[0, 1, 0, 1, 0],
-         [0, 1, 0, 1, 0],
-         [0, 0, 0, 0, 0],
-         [1, 0, 0, 0, 1],
-         [0, 1, 1, 1, 0],
-         [0, 0, 0, 0, 0],
-         ],
-        [[0, 1, 0, 1, 0],
-         [0, 1, 0, 1, 0],
-         [0, 0, 0, 0, 0],
-         [0, 0, 0, 0, 0],
-         [0, 1, 1, 1, 0],
-         [1, 0, 0, 0, 1],]]
+    target_word = "thick"
+    # desired_patterns = [
+    #     [[0, 1, 0, 1, 0],
+    #      [0, 1, 0, 1, 0],
+    #      [0, 0, 0, 0, 0],
+    #      [1, 0, 0, 0, 1],
+    #      [0, 1, 1, 1, 0],
+    #      [0, 0, 0, 0, 0],
+    #      ],
+    #     [[0, 1, 0, 1, 0],
+    #      [0, 1, 0, 1, 0],
+    #      [0, 0, 0, 0, 0],
+    #      [0, 0, 0, 0, 0],
+    #      [0, 1, 1, 1, 0],
+    #      [1, 0, 0, 0, 1],]]
+
+    message = "Hello!"
+    desired_patterns = string_to_patterns(message)
 
     modes = ["x/gy", "yg/x", "gy/x", "x/y/g"]
-    results = find_words(valid_words, target_word, desired_pattern, modes)
-    print_result(results, desired_pattern, target_word, modes)
+    results = find_words(valid_words, target_word, desired_patterns, modes)
+    print_result(results, desired_patterns, target_word, modes)
     plot_result(results, target_word, modes)
