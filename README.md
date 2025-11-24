@@ -4,6 +4,8 @@ A project to automatically find suitable words to enter in Wordle that match a d
 
 This project uses [this word list](https://gist.github.com/dracos/dd0668f281e685bad51479e5acaadb93). Credits to [dracos](https://gist.github.com/dracos).
 
+This project also uses the 6x5 font used to render character patterns in `font_data.json`. The font is [Monomin 6x5](https://fontstruct.com/fontstructions/show/395434/monomin_6x5) created by [jlong64](https://fontstruct.com/fontstructors/378571/jlong64).
+
 ## Usage
 
 Install dependencies (recommended in a virtualenv):
